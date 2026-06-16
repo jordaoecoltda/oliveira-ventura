@@ -816,36 +816,37 @@ function confirmarLead(){
   /* Fecha modal */
   document.getElementById('modal-ov').classList.remove('show');
 
-  /* Monta mensagem de notificação para o escritório */
-  var tipoLabel={'individual':'Individual/Familiar','adesao':'Coletivo por Adesão','empresarial':'Empresarial'}[_calcDados.tipo]||_calcDados.tipo;
-  var msg='🔔 *NOVA SIMULAÇÃO NO SITE*\n\n'
-    +'👤 *Nome:* '+nome+'\n'
-    +'📱 *Celular:* '+cel+'\n\n'
-    +'📊 *Dados da simulação:*\n'
-    +'• Tipo de plano: '+tipoLabel+'\n'
-    +'• Ano de contratação: '+_calcDados.ano+'\n'
-    +'• Mensalidade inicial: '+fmt(_calcDados.vi)+'\n'
-    +'• Mensalidade atual: '+fmt(_calcDados.va)+'\n'
-    +'• Aumento real: '+_calcDados.aReal.toFixed(0)+'%\n'
-    +(_calcDados.abusivo
-      ?'• Estimativa de reembolso: '+fmt(_calcDados.rec)+'\n\n✅ *Indícios de reajuste abusivo detectados!*'
-      :'\n⚠️ *Sem indícios óbvios — recomendou análise completa.*');
-
-  /* Envia notificação para o escritório via WhatsApp */
-  var waUrl='https://wa.me/5511946528000?text='+encodeURIComponent(msg);
-  window.open(waUrl,'_blank');
-
-  /* Mostra resultado na página */
+  /* Mostra resultado imediatamente */
   if(_calcDados.abusivo){
     showAbusive(_calcDados.va,_calcDados.vPerm,_calcDados.difMes,_calcDados.rec,
-      _calcDados.aReal,_calcDados.aPerm,_calcDados.label,nome);
+      _calcDados.aReal,_calcDados.aPerm,_calcDados.label,nome,cel);
   } else {
-    showNeutral(nome);
+    showNeutral(nome,cel);
   }
+
+  /* Envia notificação automática por e-mail para o escritório (silenciosa) */
+  var tipoLabel={'individual':'Individual/Familiar','adesao':'Coletivo por Adesão','empresarial':'Empresarial'}[_calcDados.tipo]||_calcDados.tipo;
+  var fd=new FormData();
+  fd.append('_subject','🔔 Nova Simulação no Site — '+nome);
+  fd.append('_template','table');
+  fd.append('_captcha','false');
+  fd.append('Nome',nome);
+  fd.append('WhatsApp',cel);
+  fd.append('Tipo de Plano',tipoLabel);
+  fd.append('Ano de Contratação',_calcDados.ano);
+  fd.append('Mensalidade Inicial',fmt(_calcDados.vi));
+  fd.append('Mensalidade Atual',fmt(_calcDados.va));
+  fd.append('Aumento Real',_calcDados.aReal.toFixed(0)+'%');
+  fd.append('Resultado',_calcDados.abusivo
+    ?'✅ ABUSIVO — Estimativa de reembolso: '+fmt(_calcDados.rec)
+    :'⚠️ Sem indícios óbvios — recomendado análise completa');
+  fetch('https://formsubmit.co/contato.ovadv@gmail.com',{method:'POST',body:fd}).catch(function(){});
 }
 
-function showAbusive(va,vPerm,dif,rec,aReal,aPerm,label,nome){
-  nome=nome?' '+nome.split(' ')[0]:'';
+function showAbusive(va,vPerm,dif,rec,aReal,aPerm,label,nome,cel){
+  var primeiroNome=nome?nome.split(' ')[0]:'';
+  var waMsg=encodeURIComponent('Olá! Me chamo '+nome+', meu WhatsApp é '+cel+'. Fiz a simulação no site e identificou indícios de reajuste abusivo. Aumento real: '+aReal.toFixed(0)+'%. Quero uma análise gratuita!');
+  nome=primeiroNome?' '+primeiroNome:'';
   var d=document.getElementById('calcRes');
   d.innerHTML='<div class="res-card">'
     +'<div class="res-hdr pos">'
@@ -860,15 +861,17 @@ function showAbusive(va,vPerm,dif,rec,aReal,aPerm,label,nome){
     +'</div>'
     +'<div class="res-cta">'
     +'<p><strong>Diferença mensal estimada: '+fmt(dif)+'</strong><br>Nossa equipe pode analisar seu caso gratuitamente e confirmar se você tem direito a esse reembolso.</p>'
-    +'<a href="https://wa.me/5511946528000?text=Ol%C3%A1!%20Fiz%20o%20c%C3%A1lculo%20no%20site%20e%20identifiquei%20ind%C3%ADcios%20de%20reajuste%20abusivo.%20Quero%20an%C3%A1lise%20gratuita." class="btn btn-wa btn-lg btn-block" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Quero Meu Dinheiro de Volta</a>'
+    +'<a href="https://wa.me/5511946528000?text='+waMsg+'" class="btn btn-wa btn-lg btn-block" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Quero Meu Dinheiro de Volta</a>'
     +'<p class="res-note">* Estimativa baseada no índice '+label+' e período de até 5 anos. Este cálculo é uma triagem inicial e não substitui análise jurídica individualizada.</p>'
     +'</div></div>';
   d.classList.add('show');
   setTimeout(function(){d.scrollIntoView({behavior:'smooth',block:'start'})},100);
 }
 
-function showNeutral(nome){
-  nome=nome?' '+nome.split(' ')[0]:'';
+function showNeutral(nome,cel){
+  var primeiroNome=nome?nome.split(' ')[0]:'';
+  var waMsg=encodeURIComponent('Olá! Me chamo '+nome+', meu WhatsApp é '+cel+'. Fiz a simulação no site e quero uma análise gratuita completa do meu plano de saúde.');
+  nome=primeiroNome?' '+primeiroNome:'';
   var d=document.getElementById('calcRes');
   d.innerHTML='<div class="res-card">'
     +'<div class="res-hdr neu">'
@@ -878,7 +881,7 @@ function showNeutral(nome){
     +'</div>'
     +'<div class="res-cta" style="border-radius:0 0 16px 16px;border:2px solid var(--gray-200);border-top:none">'
     +'<p>Muitos casos envolvem cláusulas contratuais específicas, negativas de cobertura e outros fatores que uma calculadora não identifica. A análise jurídica completa é gratuita.</p>'
-    +'<a href="https://wa.me/5511946528000?text=Ol%C3%A1!%20Quero%20uma%20an%C3%A1lise%20jur%C3%ADdica%20completa%20e%20gratuita%20do%20meu%20plano." class="btn btn-wa btn-lg btn-block" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Falar com Advogado — Análise Gratuita</a>'
+    +'<a href="https://wa.me/5511946528000?text='+waMsg+'" class="btn btn-wa btn-lg btn-block" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Falar com Advogado — Análise Gratuita</a>'
     +'<p class="res-note">Análise gratuita. Sem compromisso. Sem custos adiantados.</p>'
     +'</div></div>';
   d.classList.add('show');
