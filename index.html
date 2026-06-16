@@ -834,7 +834,7 @@ function showAbusive(va,vPerm,dif,rec,aReal,aPerm,label,nome,cel){
     +'<p class="res-note">* Estimativa baseada no índice '+label+' e período de até 5 anos. Este cálculo é uma triagem inicial e não substitui análise jurídica individualizada.</p>'
     +'</div></div>';
   d.style.display='block';
-  setTimeout(function(){d.scrollIntoView({behavior:'smooth',block:'start'})},100);
+  setTimeout(function(){var top=d.getBoundingClientRect().top+window.scrollY-90;window.scrollTo({top:top,behavior:'smooth'})},100);
 }
 
 function showNeutral(nome,cel){
@@ -854,7 +854,7 @@ function showNeutral(nome,cel){
     +'<p class="res-note">Análise gratuita. Sem compromisso. Sem custos adiantados.</p>'
     +'</div></div>';
   d.style.display='block';
-  setTimeout(function(){d.scrollIntoView({behavior:'smooth',block:'start'})},100);
+  setTimeout(function(){var top=d.getBoundingClientRect().top+window.scrollY-90;window.scrollTo({top:top,behavior:'smooth'})},100);
 }
 </script>
 </body>
