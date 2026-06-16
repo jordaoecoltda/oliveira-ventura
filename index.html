@@ -290,6 +290,20 @@ footer{background:var(--navy-dark);border-top:1px solid rgba(255,255,255,.07);pa
   animation:iFadeIn .6s ease-out 1.5s forwards}
 @keyframes iFadeIn{to{opacity:1}}
 
+/* MODAL LEAD */
+#modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(7,13,43,.88);
+  backdrop-filter:blur(5px);z-index:9997;display:none;align-items:center;justify-content:center;padding:24px}
+#modal-ov.show{display:flex}
+.modal-box{background:#fff;border-radius:20px;padding:44px 40px;max-width:460px;width:100%;
+  box-shadow:0 24px 80px rgba(0,0,0,.45);animation:mIn .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes mIn{from{opacity:0;transform:scale(.88) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-ico{width:56px;height:56px;background:rgba(201,160,0,.1);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:1.5rem;margin-bottom:20px}
+.modal-box h3{font-size:1.35rem;color:var(--navy);margin-bottom:8px}
+.modal-box > p{font-size:.88rem;color:var(--text-light);margin-bottom:28px;line-height:1.6}
+.modal-fields{display:flex;flex-direction:column;gap:14px;margin-bottom:22px}
+.modal-note{font-size:.72rem;color:var(--text-light);text-align:center;margin-top:12px}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   nav,.hdr-btn{display:none}
@@ -333,6 +347,29 @@ footer{background:var(--navy-dark);border-top:1px solid rgba(255,255,255,.07);pa
   <img src="./logo.png" alt="Oliveira e Ventura" class="intro-logo">
   <div class="intro-line"></div>
   <span class="intro-sub">Direito da Saúde</span>
+</div>
+
+<!-- MODAL LEAD -->
+<div id="modal-ov">
+  <div class="modal-box">
+    <div class="modal-ico"><i class="fas fa-chart-bar"></i></div>
+    <h3>Seu resultado está pronto!</h3>
+    <p>Informe seus dados para receber o resultado personalizado e falar com um especialista gratuitamente.</p>
+    <div class="modal-fields">
+      <div class="fg">
+        <label><i class="fas fa-user" style="color:var(--gold);margin-right:5px"></i>Seu Nome</label>
+        <input type="text" id="lead-nome" placeholder="Digite seu nome completo">
+      </div>
+      <div class="fg">
+        <label><i class="fas fa-mobile-alt" style="color:var(--gold);margin-right:5px"></i>Seu WhatsApp</label>
+        <input type="tel" id="lead-cel" placeholder="(11) 99999-9999">
+      </div>
+    </div>
+    <button class="btn btn-wa btn-block btn-lg" onclick="confirmarLead()">
+      <i class="fab fa-whatsapp"></i> Ver Meu Resultado Agora
+    </button>
+    <p class="modal-note"><i class="fas fa-lock"></i> Seus dados são confidenciais e não serão compartilhados.</p>
+  </div>
 </div>
 
 <!-- FLOATING WHATSAPP -->
@@ -721,6 +758,9 @@ function toggleMenu(btn){
   if(open)nav.style.display='none';
 }
 
+/* Dados temporários da calculadora */
+var _calcDados = null;
+
 /* ANS rates (individual/familiar) */
 var ansR={2010:.0686,2011:.0769,2012:.0769,2013:.0904,2014:.0965,
   2015:.1355,2016:.1355,2017:.1355,2018:.0,2019:.0735,2020:.0814,
@@ -754,23 +794,63 @@ function calcular(){
   var vPerm=vi*fator;
   var aReal=((va-vi)/vi)*100;
   var aPerm=(fator-1)*100;
-
-  if(va<=vi){showNeutral();return}
-  if(va<=vPerm*1.03){showNeutral();return}
-
-  var difMes=va-vPerm;
+  var abusivo=va>vi&&va>vPerm*1.03;
+  var difMes=abusivo?va-vPerm:0;
   var meses=Math.min(60,(2026-ano)*12);
   var rec=difMes*meses;
 
-  showAbusive(va,vPerm,difMes,rec,aReal,aPerm,label);
+  /* Salva dados e abre modal */
+  _calcDados={tipo:tipo,ano:ano,vi:vi,va:va,vPerm:vPerm,aReal:aReal,aPerm:aPerm,
+    label:label,abusivo:abusivo,difMes:difMes,rec:rec};
+  document.getElementById('lead-nome').value='';
+  document.getElementById('lead-cel').value='';
+  document.getElementById('modal-ov').classList.add('show');
 }
 
-function showAbusive(va,vPerm,dif,rec,aReal,aPerm,label){
+function confirmarLead(){
+  var nome=document.getElementById('lead-nome').value.trim();
+  var cel=document.getElementById('lead-cel').value.trim();
+  if(!nome){alert('Por favor, informe seu nome.');return}
+  if(!cel){alert('Por favor, informe seu WhatsApp.');return}
+
+  /* Fecha modal */
+  document.getElementById('modal-ov').classList.remove('show');
+
+  /* Monta mensagem de notificação para o escritório */
+  var tipoLabel={'individual':'Individual/Familiar','adesao':'Coletivo por Adesão','empresarial':'Empresarial'}[_calcDados.tipo]||_calcDados.tipo;
+  var msg='🔔 *NOVA SIMULAÇÃO NO SITE*\n\n'
+    +'👤 *Nome:* '+nome+'\n'
+    +'📱 *Celular:* '+cel+'\n\n'
+    +'📊 *Dados da simulação:*\n'
+    +'• Tipo de plano: '+tipoLabel+'\n'
+    +'• Ano de contratação: '+_calcDados.ano+'\n'
+    +'• Mensalidade inicial: '+fmt(_calcDados.vi)+'\n'
+    +'• Mensalidade atual: '+fmt(_calcDados.va)+'\n'
+    +'• Aumento real: '+_calcDados.aReal.toFixed(0)+'%\n'
+    +(_calcDados.abusivo
+      ?'• Estimativa de reembolso: '+fmt(_calcDados.rec)+'\n\n✅ *Indícios de reajuste abusivo detectados!*'
+      :'\n⚠️ *Sem indícios óbvios — recomendou análise completa.*');
+
+  /* Envia notificação para o escritório via WhatsApp */
+  var waUrl='https://wa.me/5511946528000?text='+encodeURIComponent(msg);
+  window.open(waUrl,'_blank');
+
+  /* Mostra resultado na página */
+  if(_calcDados.abusivo){
+    showAbusive(_calcDados.va,_calcDados.vPerm,_calcDados.difMes,_calcDados.rec,
+      _calcDados.aReal,_calcDados.aPerm,_calcDados.label,nome);
+  } else {
+    showNeutral(nome);
+  }
+}
+
+function showAbusive(va,vPerm,dif,rec,aReal,aPerm,label,nome){
+  nome=nome?' '+nome.split(' ')[0]:'';
   var d=document.getElementById('calcRes');
   d.innerHTML='<div class="res-card">'
     +'<div class="res-hdr pos">'
     +'<div class="res-status alert"><i class="fas fa-exclamation-triangle"></i> Indícios de Reajuste Abusivo Detectados</div>'
-    +'<h3 class="res-title">Você pode ter direito a reembolso</h3>'
+    +'<h3 class="res-title">'+nome+', você pode ter direito a reembolso</h3>'
     +'<p class="res-sub">Com base nos dados informados, encontramos diferença em relação ao índice '+label+'</p>'
     +'</div>'
     +'<div class="res-metrics">'
@@ -787,12 +867,13 @@ function showAbusive(va,vPerm,dif,rec,aReal,aPerm,label){
   setTimeout(function(){d.scrollIntoView({behavior:'smooth',block:'start'})},100);
 }
 
-function showNeutral(){
+function showNeutral(nome){
+  nome=nome?' '+nome.split(' ')[0]:'';
   var d=document.getElementById('calcRes');
   d.innerHTML='<div class="res-card">'
     +'<div class="res-hdr neu">'
     +'<div class="res-status info"><i class="fas fa-search"></i> Análise Inicial Concluída</div>'
-    +'<h3 class="res-title">Recomendamos Análise Profissional</h3>'
+    +'<h3 class="res-title">'+nome+', recomendamos uma análise profissional</h3>'
     +'<p class="res-sub">Não identificamos diferença óbvia, mas isso não descarta abusividade em cláusulas específicas.</p>'
     +'</div>'
     +'<div class="res-cta" style="border-radius:0 0 16px 16px;border:2px solid var(--gray-200);border-top:none">'
