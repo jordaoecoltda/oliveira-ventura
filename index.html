@@ -292,8 +292,7 @@ footer{background:var(--navy-dark);border-top:1px solid rgba(255,255,255,.07);pa
 
 /* MODAL LEAD */
 #modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(7,13,43,.88);
-  backdrop-filter:blur(5px);z-index:9997;display:none;align-items:center;justify-content:center;padding:24px}
-#modal-ov.show{display:flex}
+  z-index:9997;display:none;align-items:center;justify-content:center;padding:24px}
 .modal-box{background:#fff;border-radius:20px;padding:44px 40px;max-width:460px;width:100%;
   box-shadow:0 24px 80px rgba(0,0,0,.45);animation:mIn .35s cubic-bezier(.34,1.56,.64,1)}
 @keyframes mIn{from{opacity:0;transform:scale(.88) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
@@ -350,7 +349,7 @@ footer{background:var(--navy-dark);border-top:1px solid rgba(255,255,255,.07);pa
 </div>
 
 <!-- MODAL LEAD -->
-<div id="modal-ov">
+<div id="modal-ov" onclick="if(event.target===this)this.style.display='none'">
   <div class="modal-box">
     <div class="modal-ico"><i class="fas fa-chart-bar"></i></div>
     <h3>Seu resultado está pronto!</h3>
@@ -804,7 +803,8 @@ function calcular(){
     label:label,abusivo:abusivo,difMes:difMes,rec:rec};
   document.getElementById('lead-nome').value='';
   document.getElementById('lead-cel').value='';
-  document.getElementById('modal-ov').classList.add('show');
+  var m=document.getElementById('modal-ov');
+  m.style.display='flex';
 }
 
 function confirmarLead(){
@@ -814,7 +814,7 @@ function confirmarLead(){
   if(!cel){alert('Por favor, informe seu WhatsApp.');return}
 
   /* Fecha modal */
-  document.getElementById('modal-ov').classList.remove('show');
+  document.getElementById('modal-ov').style.display='none';
 
   /* Mostra resultado imediatamente */
   if(_calcDados.abusivo){
