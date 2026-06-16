@@ -808,7 +808,7 @@ function calcular(){
   fd.append('Mensalidade Atual',fmt(va));
   fd.append('Aumento Real',aReal.toFixed(0)+'%');
   fd.append('Resultado',abusivo?'✅ ABUSIVO — Estimativa: '+fmt(rec):'⚠️ Sem indícios óbvios — recomendado análise completa');
-  fetch('https://formsubmit.co/contato.ovadv@gmail.com',{method:'POST',body:fd}).catch(function(){});
+  fetch('https://formsubmit.co/ajax/contato.ovadv@gmail.com',{method:'POST',body:fd}).catch(function(){});
 }
 
 
