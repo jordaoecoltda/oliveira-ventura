@@ -511,7 +511,7 @@ footer{background:var(--navy-dark);border-top:1px solid rgba(255,255,255,.07);pa
             </select>
           </div>
           <div class="fg" style="align-self:flex-end">
-            <button class="btn btn-gold btn-block" onclick="calcular()" style="padding:14px 20px;font-size:.85rem">
+            <button type="button" class="btn btn-gold btn-block" onclick="calcular()" style="padding:14px 20px;font-size:.85rem">
               <i class="fas fa-calculator"></i> Calcular Agora
             </button>
           </div>
@@ -833,7 +833,7 @@ function showAbusive(va,vPerm,dif,rec,aReal,aPerm,label,nome,cel){
     +'<a href="https://wa.me/5511946528000?text='+waMsg+'" class="btn btn-wa btn-lg btn-block" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Quero Meu Dinheiro de Volta</a>'
     +'<p class="res-note">* Estimativa baseada no índice '+label+' e período de até 5 anos. Este cálculo é uma triagem inicial e não substitui análise jurídica individualizada.</p>'
     +'</div></div>';
-  d.classList.add('show');
+  d.style.display='block';
   setTimeout(function(){d.scrollIntoView({behavior:'smooth',block:'start'})},100);
 }
 
@@ -853,7 +853,7 @@ function showNeutral(nome,cel){
     +'<a href="https://wa.me/5511946528000?text='+waMsg+'" class="btn btn-wa btn-lg btn-block" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Falar com Advogado — Análise Gratuita</a>'
     +'<p class="res-note">Análise gratuita. Sem compromisso. Sem custos adiantados.</p>'
     +'</div></div>';
-  d.classList.add('show');
+  d.style.display='block';
   setTimeout(function(){d.scrollIntoView({behavior:'smooth',block:'start'})},100);
 }
 </script>
