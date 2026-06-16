@@ -348,29 +348,6 @@ footer{background:var(--navy-dark);border-top:1px solid rgba(255,255,255,.07);pa
   <span class="intro-sub">Direito da Saúde</span>
 </div>
 
-<!-- MODAL LEAD -->
-<div id="modal-ov" onclick="if(event.target===this)this.style.display='none'">
-  <div class="modal-box">
-    <div class="modal-ico"><i class="fas fa-chart-bar"></i></div>
-    <h3>Seu resultado está pronto!</h3>
-    <p>Informe seus dados para receber o resultado personalizado e falar com um especialista gratuitamente.</p>
-    <div class="modal-fields">
-      <div class="fg">
-        <label><i class="fas fa-user" style="color:var(--gold);margin-right:5px"></i>Seu Nome</label>
-        <input type="text" id="lead-nome" placeholder="Digite seu nome completo">
-      </div>
-      <div class="fg">
-        <label><i class="fas fa-mobile-alt" style="color:var(--gold);margin-right:5px"></i>Seu WhatsApp</label>
-        <input type="tel" id="lead-cel" placeholder="(11) 99999-9999">
-      </div>
-    </div>
-    <button class="btn btn-wa btn-block btn-lg" onclick="confirmarLead()">
-      <i class="fab fa-whatsapp"></i> Ver Meu Resultado Agora
-    </button>
-    <p class="modal-note"><i class="fas fa-lock"></i> Seus dados são confidenciais e não serão compartilhados.</p>
-  </div>
-</div>
-
 <!-- FLOATING WHATSAPP -->
 <a href="https://wa.me/5511946528000?text=Ol%C3%A1!%20Quero%20analisar%20meu%20plano%20de%20sa%C3%BAde%20gratuitamente." class="fwa" target="_blank" rel="noopener" aria-label="WhatsApp">
   <i class="fab fa-whatsapp"></i>
@@ -494,6 +471,14 @@ footer{background:var(--navy-dark);border-top:1px solid rgba(255,255,255,.07);pa
     <div class="calc-wrap">
       <div class="calc-card">
         <div class="calc-g">
+          <div class="fg">
+            <label><i class="fas fa-user" style="color:var(--gold);margin-right:5px"></i>Seu Nome</label>
+            <input type="text" id="lead-nome" placeholder="Digite seu nome completo">
+          </div>
+          <div class="fg">
+            <label><i class="fas fa-mobile-alt" style="color:var(--gold);margin-right:5px"></i>Seu WhatsApp</label>
+            <input type="tel" id="lead-cel" placeholder="(11) 99999-9999">
+          </div>
           <div class="fg">
             <label><i class="fas fa-file-medical" style="color:var(--gold);margin-right:5px"></i>Tipo de Plano</label>
             <select id="tipoplano">
@@ -773,11 +758,15 @@ var ipcaR={2010:.0591,2011:.0650,2012:.0584,2013:.0591,2014:.0641,
 function fmt(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
 
 function calcular(){
+  var nome=document.getElementById('lead-nome').value.trim();
+  var cel=document.getElementById('lead-cel').value.trim();
   var tipo=document.getElementById('tipoplano').value;
   var ano=parseInt(document.getElementById('anoinicio').value);
   var vi=parseFloat(document.getElementById('valorinicial').value);
   var va=parseFloat(document.getElementById('valoratual').value);
 
+  if(!nome){alert('Por favor, informe seu nome.');return}
+  if(!cel){alert('Por favor, informe seu WhatsApp.');return}
   if(!tipo){alert('Selecione o tipo de plano.');return}
   if(!ano){alert('Selecione o ano de contratação.');return}
   if(!vi||vi<=0){alert('Informe a mensalidade inicial.');return}
@@ -798,34 +787,15 @@ function calcular(){
   var meses=Math.min(60,(2026-ano)*12);
   var rec=difMes*meses;
 
-  /* Salva dados e abre modal */
-  _calcDados={tipo:tipo,ano:ano,vi:vi,va:va,vPerm:vPerm,aReal:aReal,aPerm:aPerm,
-    label:label,abusivo:abusivo,difMes:difMes,rec:rec};
-  document.getElementById('lead-nome').value='';
-  document.getElementById('lead-cel').value='';
-  var m=document.getElementById('modal-ov');
-  m.style.display='flex';
-}
-
-function confirmarLead(){
-  var nome=document.getElementById('lead-nome').value.trim();
-  var cel=document.getElementById('lead-cel').value.trim();
-  if(!nome){alert('Por favor, informe seu nome.');return}
-  if(!cel){alert('Por favor, informe seu WhatsApp.');return}
-
-  /* Fecha modal */
-  document.getElementById('modal-ov').style.display='none';
-
-  /* Mostra resultado imediatamente */
-  if(_calcDados.abusivo){
-    showAbusive(_calcDados.va,_calcDados.vPerm,_calcDados.difMes,_calcDados.rec,
-      _calcDados.aReal,_calcDados.aPerm,_calcDados.label,nome,cel);
+  /* Mostra resultado */
+  if(abusivo){
+    showAbusive(va,vPerm,difMes,rec,aReal,aPerm,label,nome,cel);
   } else {
     showNeutral(nome,cel);
   }
 
-  /* Envia notificação automática por e-mail para o escritório (silenciosa) */
-  var tipoLabel={'individual':'Individual/Familiar','adesao':'Coletivo por Adesão','empresarial':'Empresarial'}[_calcDados.tipo]||_calcDados.tipo;
+  /* Notificação automática por e-mail para o escritório */
+  var tipoLabel={'individual':'Individual/Familiar','adesao':'Coletivo por Adesão','empresarial':'Empresarial'}[tipo]||tipo;
   var fd=new FormData();
   fd.append('_subject','🔔 Nova Simulação no Site — '+nome);
   fd.append('_template','table');
@@ -833,15 +803,14 @@ function confirmarLead(){
   fd.append('Nome',nome);
   fd.append('WhatsApp',cel);
   fd.append('Tipo de Plano',tipoLabel);
-  fd.append('Ano de Contratação',_calcDados.ano);
-  fd.append('Mensalidade Inicial',fmt(_calcDados.vi));
-  fd.append('Mensalidade Atual',fmt(_calcDados.va));
-  fd.append('Aumento Real',_calcDados.aReal.toFixed(0)+'%');
-  fd.append('Resultado',_calcDados.abusivo
-    ?'✅ ABUSIVO — Estimativa de reembolso: '+fmt(_calcDados.rec)
-    :'⚠️ Sem indícios óbvios — recomendado análise completa');
+  fd.append('Ano de Contratação',ano);
+  fd.append('Mensalidade Inicial',fmt(vi));
+  fd.append('Mensalidade Atual',fmt(va));
+  fd.append('Aumento Real',aReal.toFixed(0)+'%');
+  fd.append('Resultado',abusivo?'✅ ABUSIVO — Estimativa: '+fmt(rec):'⚠️ Sem indícios óbvios — recomendado análise completa');
   fetch('https://formsubmit.co/contato.ovadv@gmail.com',{method:'POST',body:fd}).catch(function(){});
 }
+
 
 function showAbusive(va,vPerm,dif,rec,aReal,aPerm,label,nome,cel){
   var primeiroNome=nome?nome.split(' ')[0]:'';
