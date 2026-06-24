@@ -842,11 +842,14 @@ function calcular(){
   var meses=calcMeses(ano,mes);
   var rec=difMes*meses;
 
+  /* Total pago acima da mensalidade inicial nos últimos 5 anos (para resultado neutro) */
+  var totalAcima=Math.max(0,va-vi)*meses;
+
   /* Mostra resultado */
   if(abusivo){
     showAbusive(va,vPerm,difMes,rec,aReal,aPerm,label,nome,cel);
   } else {
-    showNeutral(aReal,aPerm,rec,label,nome,cel);
+    showNeutral(aReal,aPerm,totalAcima,label,nome,cel);
   }
 
   /* Notificação automática por e-mail para o escritório */
@@ -893,7 +896,7 @@ function showAbusive(va,vPerm,dif,rec,aReal,aPerm,label,nome,cel){
   setTimeout(function(){var top=d.getBoundingClientRect().top+window.scrollY-90;window.scrollTo({top:top,behavior:'smooth'})},100);
 }
 
-function showNeutral(aReal,aPerm,rec,label,nome,cel){
+function showNeutral(aReal,aPerm,totalAcima,label,nome,cel){
   var primeiroNome=nome?nome.split(' ')[0]:'';
   var waMsg=encodeURIComponent('Olá! Me chamo '+nome+', meu WhatsApp é '+cel+'. Fiz a simulação no site e quero uma análise gratuita completa do meu plano de saúde.');
   nome=primeiroNome?' '+primeiroNome:'';
@@ -907,12 +910,12 @@ function showNeutral(aReal,aPerm,rec,label,nome,cel){
     +'<div class="res-metrics">'
     +'<div class="metric"><div class="m-val" style="color:#d97706">'+aReal.toFixed(0)+'%</div><div class="m-lbl">Seu aumento total</div></div>'
     +'<div class="metric"><div class="m-val">'+aPerm.toFixed(0)+'%</div><div class="m-lbl">Limite '+label+'</div></div>'
-    +'<div class="metric"><div class="m-val grn">'+(rec>0?fmt(rec):'Análise necessária')+'</div><div class="m-lbl">'+(rec>0?'Estimativa de reembolso':'Consulte um advogado')+'</div></div>'
+    +'<div class="metric"><div class="m-val grn">'+fmt(totalAcima)+'</div><div class="m-lbl">Valor total em análise*</div></div>'
     +'</div>'
     +'<div class="res-cta" style="border-radius:0 0 16px 16px;border:2px solid var(--gray-200);border-top:none">'
     +'<p>Muitos casos de abusividade envolvem <strong>cláusulas contratuais específicas, faixa etária e negativas de cobertura</strong> — fatores que uma calculadora não consegue identificar. A análise jurídica completa é gratuita.</p>'
     +'<a href="https://wa.me/5511946528000?text='+waMsg+'" class="btn btn-wa btn-lg btn-block" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Falar com Advogado — Análise Gratuita</a>'
-    +'<p class="res-note">Análise gratuita. Sem compromisso. Sem custos adiantados.</p>'
+    +'<p class="res-note">* Total pago acima da mensalidade inicial nos últimos 5 anos. A análise jurídica pode identificar outros fundamentos para revisão além dos limites do índice '+label+'. Análise gratuita e sem compromisso.</p>'
     +'</div></div>';
   d.style.display='block';
   setTimeout(function(){var top=d.getBoundingClientRect().top+window.scrollY-90;window.scrollTo({top:top,behavior:'smooth'})},100);
