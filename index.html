@@ -489,7 +489,25 @@ footer{background:var(--navy-dark);border-top:1px solid rgba(255,255,255,.07);pa
             </select>
           </div>
           <div class="fg">
-            <label><i class="fas fa-calendar" style="color:var(--gold);margin-right:5px"></i>Ano de Contratação</label>
+            <label><i class="fas fa-calendar" style="color:var(--gold);margin-right:5px"></i>Mês de Início</label>
+            <select id="mesinicio">
+              <option value="">Selecione...</option>
+              <option value="1">Janeiro</option>
+              <option value="2">Fevereiro</option>
+              <option value="3">Março</option>
+              <option value="4">Abril</option>
+              <option value="5">Maio</option>
+              <option value="6">Junho</option>
+              <option value="7">Julho</option>
+              <option value="8">Agosto</option>
+              <option value="9">Setembro</option>
+              <option value="10">Outubro</option>
+              <option value="11">Novembro</option>
+              <option value="12">Dezembro</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label><i class="fas fa-calendar-alt" style="color:var(--gold);margin-right:5px"></i>Ano de Início</label>
             <select id="anoinicio"><option value="">Selecione...</option></select>
           </div>
           <div class="fg">
@@ -702,8 +720,8 @@ footer{background:var(--navy-dark);border-top:1px solid rgba(255,255,255,.07);pa
 
 /* Year select */
 (function(){
-  var s=document.getElementById('anoinicio'),y=2025;
-  for(;y>=2010;y--){var o=document.createElement('option');o.value=y;o.textContent=y;s.appendChild(o)}
+  var s=document.getElementById('anoinicio'),y=2026;
+  for(;y>=2000;y--){var o=document.createElement('option');o.value=y;o.textContent=y;s.appendChild(o)}
 })();
 
 /* Header scroll */
@@ -745,15 +763,54 @@ function toggleMenu(btn){
 /* Dados temporários da calculadora */
 var _calcDados = null;
 
-/* ANS rates (individual/familiar) */
-var ansR={2010:.0686,2011:.0769,2012:.0769,2013:.0904,2014:.0965,
-  2015:.1355,2016:.1355,2017:.1355,2018:.0,2019:.0735,2020:.0814,
-  2021:-.0819,2022:.1550,2023:.0963,2024:.0606,2025:.0533,2026:.0};
+/* Tabela ANS — chave = ano de início do período (maio/ANO a abril/ANO+1) */
+var ansPeriodosANS={
+  2000:.0542,2001:.0871,2002:.0769,2003:.0927,2004:.1175,
+  2005:.1169,2006:.0889,2007:.0576,2008:.0548,2009:.0676,
+  2010:.0673,2011:.0769,2012:.0793,2013:.0904,2014:.0965,
+  2015:.1355,2016:.1357,2017:.1355,2018:.1000,2019:.0735,
+  2020:.0814,2021:-.0819,2022:.1550,2023:.0963,2024:.0691,
+  2025:.0606,2026:.0511
+};
 
-/* IPCA rates (collective plans) */
-var ipcaR={2010:.0591,2011:.0650,2012:.0584,2013:.0591,2014:.0641,
-  2015:.1067,2016:.0629,2017:.0295,2018:.0375,2019:.0431,2020:.0452,
-  2021:.1006,2022:.0579,2023:.0462,2024:.0483,2025:.0510,2026:.0};
+/* IPCA anual (planos coletivos) */
+var ipcaR={
+  2000:.0597,2001:.0767,2002:.1253,2003:.0930,2004:.0760,
+  2005:.0569,2006:.0314,2007:.0446,2008:.0590,2009:.0431,
+  2010:.0591,2011:.0650,2012:.0584,2013:.0591,2014:.0641,
+  2015:.1067,2016:.0629,2017:.0295,2018:.0375,2019:.0431,
+  2020:.0452,2021:.1006,2022:.0579,2023:.0462,2024:.0483,
+  2025:.0510,2026:.0
+};
+
+/* Fator acumulado ANS: aplica taxa do período vigente em cada aniversário */
+function calcFatorANS(startAno,startMes){
+  var hoje={ano:2026,mes:6};
+  var fator=1;
+  for(var y=startAno+1;;y++){
+    if(y>hoje.ano||(y===hoje.ano&&startMes>hoje.mes)) break;
+    var pk=startMes>=5?y:y-1;
+    fator*=(1+(ansPeriodosANS[pk]||0));
+  }
+  return fator;
+}
+
+/* Fator acumulado IPCA + spread 3% por aniversário (planos coletivos) */
+function calcFatorIPCA(startAno,startMes){
+  var hoje={ano:2026,mes:6};
+  var fator=1;
+  for(var y=startAno+1;;y++){
+    if(y>hoje.ano||(y===hoje.ano&&startMes>hoje.mes)) break;
+    fator*=(1+(ipcaR[y]||0)+0.03);
+  }
+  return fator;
+}
+
+/* Total de meses desde o início (máx. 60 para prescrição de 5 anos) */
+function calcMeses(startAno,startMes){
+  var meses=(2026-startAno)*12+(6-startMes);
+  return Math.min(60,Math.max(0,meses));
+}
 
 function fmt(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
 
@@ -761,6 +818,7 @@ function calcular(){
   var nome=document.getElementById('lead-nome').value.trim();
   var cel=document.getElementById('lead-cel').value.trim();
   var tipo=document.getElementById('tipoplano').value;
+  var mes=parseInt(document.getElementById('mesinicio').value);
   var ano=parseInt(document.getElementById('anoinicio').value);
   var vi=parseFloat(document.getElementById('valorinicial').value);
   var va=parseFloat(document.getElementById('valoratual').value);
@@ -768,23 +826,20 @@ function calcular(){
   if(!nome){alert('Por favor, informe seu nome.');return}
   if(!cel){alert('Por favor, informe seu WhatsApp.');return}
   if(!tipo){alert('Selecione o tipo de plano.');return}
-  if(!ano){alert('Selecione o ano de contratação.');return}
+  if(!mes){alert('Selecione o mês de início do plano.');return}
+  if(!ano){alert('Selecione o ano de início do plano.');return}
   if(!vi||vi<=0){alert('Informe a mensalidade inicial.');return}
   if(!va||va<=0){alert('Informe a mensalidade atual.');return}
 
-  var rates=tipo==='individual'?ansR:ipcaR;
   var label=tipo==='individual'?'ANS (planos individuais)':'IPCA';
-  var spread=tipo==='individual'?0:.03;
-
-  var fator=1;
-  for(var y=ano+1;y<=2026;y++){fator*=(1+((rates[y]||0)+spread))}
+  var fator=tipo==='individual'?calcFatorANS(ano,mes):calcFatorIPCA(ano,mes);
 
   var vPerm=vi*fator;
   var aReal=((va-vi)/vi)*100;
   var aPerm=(fator-1)*100;
   var abusivo=va>vi&&va>vPerm*1.03;
   var difMes=abusivo?va-vPerm:0;
-  var meses=Math.min(60,(2026-ano)*12);
+  var meses=calcMeses(ano,mes);
   var rec=difMes*meses;
 
   /* Mostra resultado */
@@ -796,6 +851,7 @@ function calcular(){
 
   /* Notificação automática por e-mail para o escritório */
   var tipoLabel={'individual':'Individual/Familiar','adesao':'Coletivo por Adesão','empresarial':'Empresarial'}[tipo]||tipo;
+  var mesesNome=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   var fd=new FormData();
   fd.append('_subject','🔔 Nova Simulação no Site — '+nome);
   fd.append('_template','table');
@@ -803,7 +859,7 @@ function calcular(){
   fd.append('Nome',nome);
   fd.append('WhatsApp',cel);
   fd.append('Tipo de Plano',tipoLabel);
-  fd.append('Ano de Contratação',ano);
+  fd.append('Período de Início',mesesNome[mes-1]+'/'+ano);
   fd.append('Mensalidade Inicial',fmt(vi));
   fd.append('Mensalidade Atual',fmt(va));
   fd.append('Aumento Real',aReal.toFixed(0)+'%');
