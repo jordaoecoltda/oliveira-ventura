@@ -837,8 +837,8 @@ function calcular(){
   var vPerm=vi*fator;
   var aReal=((va-vi)/vi)*100;
   var aPerm=(fator-1)*100;
-  var abusivo=va>vi&&va>vPerm*1.03;
-  var difMes=abusivo?va-vPerm:0;
+  var abusivo=va>vi&&va>vPerm;
+  var difMes=Math.max(0,va-vPerm);
   var meses=calcMeses(ano,mes);
   var rec=difMes*meses;
 
@@ -846,7 +846,7 @@ function calcular(){
   if(abusivo){
     showAbusive(va,vPerm,difMes,rec,aReal,aPerm,label,nome,cel);
   } else {
-    showNeutral(nome,cel);
+    showNeutral(aReal,aPerm,rec,label,nome,cel);
   }
 
   /* Notificação automática por e-mail para o escritório */
@@ -893,7 +893,7 @@ function showAbusive(va,vPerm,dif,rec,aReal,aPerm,label,nome,cel){
   setTimeout(function(){var top=d.getBoundingClientRect().top+window.scrollY-90;window.scrollTo({top:top,behavior:'smooth'})},100);
 }
 
-function showNeutral(nome,cel){
+function showNeutral(aReal,aPerm,rec,label,nome,cel){
   var primeiroNome=nome?nome.split(' ')[0]:'';
   var waMsg=encodeURIComponent('Olá! Me chamo '+nome+', meu WhatsApp é '+cel+'. Fiz a simulação no site e quero uma análise gratuita completa do meu plano de saúde.');
   nome=primeiroNome?' '+primeiroNome:'';
@@ -902,10 +902,15 @@ function showNeutral(nome,cel){
     +'<div class="res-hdr neu">'
     +'<div class="res-status info"><i class="fas fa-search"></i> Análise Inicial Concluída</div>'
     +'<h3 class="res-title">'+nome+', recomendamos uma análise profissional</h3>'
-    +'<p class="res-sub">Não identificamos diferença óbvia, mas isso não descarta abusividade em cláusulas específicas.</p>'
+    +'<p class="res-sub">Não identificamos excesso claro pelo índice '+label+', mas outros fundamentos jurídicos podem gerar reembolso.</p>'
+    +'</div>'
+    +'<div class="res-metrics">'
+    +'<div class="metric"><div class="m-val" style="color:#d97706">'+aReal.toFixed(0)+'%</div><div class="m-lbl">Seu aumento total</div></div>'
+    +'<div class="metric"><div class="m-val">'+aPerm.toFixed(0)+'%</div><div class="m-lbl">Limite '+label+'</div></div>'
+    +'<div class="metric"><div class="m-val grn">'+(rec>0?fmt(rec):'Análise necessária')+'</div><div class="m-lbl">'+(rec>0?'Estimativa de reembolso':'Consulte um advogado')+'</div></div>'
     +'</div>'
     +'<div class="res-cta" style="border-radius:0 0 16px 16px;border:2px solid var(--gray-200);border-top:none">'
-    +'<p>Muitos casos envolvem cláusulas contratuais específicas, negativas de cobertura e outros fatores que uma calculadora não identifica. A análise jurídica completa é gratuita.</p>'
+    +'<p>Muitos casos de abusividade envolvem <strong>cláusulas contratuais específicas, faixa etária e negativas de cobertura</strong> — fatores que uma calculadora não consegue identificar. A análise jurídica completa é gratuita.</p>'
     +'<a href="https://wa.me/5511946528000?text='+waMsg+'" class="btn btn-wa btn-lg btn-block" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Falar com Advogado — Análise Gratuita</a>'
     +'<p class="res-note">Análise gratuita. Sem compromisso. Sem custos adiantados.</p>'
     +'</div></div>';
